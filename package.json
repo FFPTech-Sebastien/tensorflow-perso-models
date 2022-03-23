@@ -10,6 +10,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "~1.15.0",
     "@tensorflow/tfjs": "^3.14.0",
     "@tensorflow/tfjs-react-native": "^0.8.0",
     "expo": "~44.0.0",
@@ -23,7 +24,7 @@
     "react-dom": "17.0.1",
     "react-native": "0.64.3",
     "react-native-fs": "^2.19.0",
-    "react-native-unimodules": "^0.14.10",
+    "react-native-unimodules": "~0.15.0",
     "react-native-web": "0.17.1"
   },
   "devDependencies": {

@@ -9,6 +9,8 @@ import {
 	Text,
 	ActivityIndicator,
 } from 'react-native';
+import Canvas from 'react-native-canvas';
+
 
 import * as tf from '@tensorflow/tfjs';
 import {
@@ -18,30 +20,27 @@ import { cropPicture } from './src/helpers/image-helper';
 import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
 import { Camera } from 'expo-camera';
 import { cameraWithTensors } from '@tensorflow/tfjs-react-native';
+import Svg, { Rect } from 'react-native-svg';
 
-const RESULT_MAPPING = ['Triangle', 'Circle', 'Square'];
 
 const modelJson = require('./src/models/blaze/model.json');
 const modelWeights = require('./src/models/blaze/group1-shard1of1.bin');
 
 const TensorCamera = cameraWithTensors(Camera);
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 let frameCount = 0;
 let makePredictionEneveryNFrame = 50;
 
 export default function App() {
-	const cameraRef = useRef();
-	const [isProcessing, setIsProcessing] = useState(false);
-	const [presentedShape, setPresentedShape] = useState('');
+	const [face, setFace] = useState();
 
 	const handleImageCapture = async (images) => {
 		const model = await tf.loadGraphModel(bundleResourceIO(modelJson, modelWeights));
-		console.log("handle");
 		const loop = async () => {
 			if (frameCount % makePredictionEneveryNFrame === 0) {
 				const image = images.next().value;
-				const x = await tf.cast(image, 'float32')
-				await processImagePrediction(model, x);
+				const tensor = await tf.cast(image, 'float32')
+				await processImagePrediction(model, tensor.reshape([1, 192, 192, 3]));
 				tf.dispose(images);
 			}
 
@@ -54,26 +53,39 @@ export default function App() {
 	};
 
 	const processImagePrediction = async (model, tensor) => {
-		const prediction = await model.predict(tensor.reshape([1, 192, 192, 3]));
-		// const preds = prediction.dataSync();
-		console.log(prediction);
-		// let awareness = "";
-		// preds.forEach((pred, i) => {
-		// 	//console.log(`x: ${i}, pred: ${pred}`);
-		// 	if (pred > 0.9) {
-		// 		if (i === 0) {
-		// 			awareness = "0";
-		// 		}
-		// 		if (i === 1) {
-		// 			awareness = "10";
-		// 		}
-		// 		if (i === 2) {
-		// 			awareness = "5";
-		// 		}
-		// 		console.log(`Awareness level ${awareness} Probability : ${pred}`);
-		// 	}
-		// });
+		const output = model.execute(tensor);
+		const [boxes, scores, classes] = output;
+		const boxes_data = boxes.dataSync();
+		let [x1, y1, x2, y2] = boxes_data.slice(0, 4);
+		const width = x2 - x1;
+		const height = y2 - y1;
+		setFace({
+			x: x1,
+			y: y1,
+			width,
+			height,
+		})
 	};
+
+	const renderBoundings = () => {
+		const { x, y, width, height } = face;
+		return (
+			<Svg
+				height="100%"
+				width="100%"
+				viewBox={`0 0 ${width} ${height}`}
+			>
+				<Rect
+					x={x1}
+					y={y1}
+					width={width}
+					height={height}
+					stroke="red"
+					strokeWidth="2"
+				/>
+			</Svg>
+		);
+	}
 
 	useEffect(() => {
 		(async () => {
@@ -84,22 +96,11 @@ export default function App() {
 
 	return (
 		<View style={styles.container}>
-			<Text style={{
-				fontSize: 20,
-				color: 'white',
-				fontWeight: 'bold',
-				zIndex: 99,
-				position: 'absolute',
-				top: 50,
-				left: width / 2 - 50
-			}}>
-				{presentedShape}
-			</Text>
 			<TensorCamera
 				cameraTextureHeight={1920}
 				cameraTextureWidth={1080}
 				style={styles.camera}
-				type={Camera.Constants.Type.back}
+				type={Camera.Constants.Type.front}
 				autoFocus={true}
 				whiteBalance={Camera.Constants.WhiteBalance.auto}
 				resizeDepth={3}
@@ -108,10 +109,15 @@ export default function App() {
 				autorender
 				onReady={handleImageCapture}
 			/>
-			<Pressable
-				onPress={() => handleImageCapture()}
-				style={styles.captureButton}
-			/>
+			<View style={{
+				position: 'absolute',
+				width: '100%',
+				height: '100%',
+				zIndex: 999
+			}}>
+				{renderBoundings()}
+			</View>
+
 		</View>
 	);
 };

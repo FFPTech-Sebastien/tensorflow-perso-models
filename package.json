@@ -10,7 +10,11 @@
     "eject": "expo eject"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@react-native-async-storage/async-storage": "github:react-native-async-storage/async-storage",
+=======
+    "@react-native-async-storage/async-storage": "~1.15.0",
+>>>>>>> 187f8a9e500d48394293af5c36e97b586ea19477
     "@tensorflow/tfjs": "^3.14.0",
     "@tensorflow/tfjs-react-native": "^0.8.0",
     "expo": "~44.0.0",
@@ -25,10 +29,15 @@
     "react-native": "0.64.3",
     "react-native-canvas": "^0.1.38",
     "react-native-fs": "^2.19.0",
+<<<<<<< HEAD
     "react-native-svg": "^12.3.0",
     "react-native-unimodules": "^0.14.10",
     "react-native-web": "0.17.1",
     "react-native-webview": "^11.17.2"
+=======
+    "react-native-unimodules": "~0.15.0",
+    "react-native-web": "0.17.1"
+>>>>>>> 187f8a9e500d48394293af5c36e97b586ea19477
   },
   "devDependencies": {
     "@babel/core": "^7.12.9"
